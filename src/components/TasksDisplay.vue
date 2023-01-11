@@ -1,5 +1,6 @@
 <template>
   <div>
+    <h1>{{ waitMessage }}</h1>
     <ul>
       <li v-for="m in tasks" :key="m.sid">
         <h4>
@@ -7,9 +8,13 @@
         </h4>
         <p>
           {{ m.submitStatue }}
+          <button @click="addToSettlement(m.sid)" v-if="m.answerable">
+            加入结算区
+          </button>
+          <button @click="addToSettlement(m.sid)" v-else disabled>
+            加入结算区
+          </button>
         </p>
-        <button @click="addToSettlement(m.sid)" v-if="m.answerable">加入结算区</button>
-        <button @click="addToSettlement(m.sid)" v-else disabled>加入结算区</button>
       </li>
     </ul>
   </div>
@@ -23,6 +28,7 @@ export default {
   data() {
     return {
       tasks: [],
+      waitMessage: "",
     };
   },
   watch: {
@@ -45,7 +51,7 @@ export default {
       axios //请求作业列表信息
         .request(options)
         .then((response) => {
-          let data = response.data["data"];
+          let data = response.data["data"]; //为了简写而赋值
           this.tasks = [];
           for (var i of data) {
             this.tasks.push({
@@ -56,36 +62,52 @@ export default {
               submitStatue: i["submitState"],
             });
           }
+          this.waitMessage = "请求作业答案中,请稍后...";
+          var sent = [];
           for (let n of this.tasks) {
             if (n["submitable"]) {
-              let options = {
-                method: "POST",
-                url: "http://xinkaoyun.tk/getoanswer.php",
-                params: { sid: n["sid"] },
-              };
-              axios
-                .request(options)
-                .then((response) => {
-                  if (response.data != "No Answer") {
-                    n["answerable"] = true;
-                  } else {
-                    n["answerable"] = false;
-                  }
-                })
-                .catch(function (error) {
-                  alert(
-                    "网络连接失败，刷新网页试试？多次重复出现此问题请将错误信息提交给开发者！\n错误信息:" +
-                      error
-                  );
-                });
+              sent.push(Number(n["sid"]));
             }
           }
+          sent = JSON.stringify(sent);
+          const options = {
+            method: "POST",
+            url: "http://xinkaoyun.tk/getoanswer2.php",
+            params: { sid: sent },
+          };
+
+          axios
+            .request(options)
+            .then((response) => {
+              if (response.data["code"] === 0) {
+                alert(
+                  "网络连接失败，刷新网页试试？\n多次重复出现此问题请将错误信息提交给开发者！\n错误信息:" +
+                    response.data["errorMessage"]
+                );
+              }
+              for (let i of this.tasks) {
+                if (
+                  response.data[i["sid"]] === undefined ||
+                  response.data[i["sid"]] === "No Answer"
+                ) {
+                } else {
+                  i["answerable"] = true;
+                }
+              }
+              this.waitMessage = "";
+            })
+            .catch(function (error) {
+              alert(
+                "网络连接失败，刷新网页试试？\n多次重复出现此问题请将错误信息提交给开发者！\n错误信息:" +
+                  error
+              );
+            });
           return;
           //判断是否有答案
         })
         .catch((error) => {
           alert(
-            "网络连接失败，刷新网页试试？多次重复出现此问题请将错误信息提交给开发者！\n错误信息:" +
+            "网络连接失败，刷新网页试试？\n多次重复出现此问题请将错误信息提交给开发者！\n错误信息:" +
               error
           );
         });
@@ -95,8 +117,8 @@ export default {
     addToSettlement(sid) {
       let Settler = localStorage.getItem("Settler");
       Settler = Settler === null ? [] : JSON.parse(Settler);
-      Settler.push(sid)
-      localStorage.setItem("Settler",JSON.stringify(Settler))
+      Settler.push(sid);
+      localStorage.setItem("Settler", JSON.stringify(Settler));
     },
   },
 };

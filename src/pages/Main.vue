@@ -11,7 +11,7 @@
 
 <script>
 import axios from "axios";
-import TaskDisplay from "./TasksDisplay.vue"
+import TaskDisplay from "../components/TasksDisplay.vue"
 export default {
   name: "Main",
   data() {
@@ -25,7 +25,7 @@ export default {
   },
   mounted() {
     //调试期代码，生产环境删
-    localStorage.setItem("token", "pc_593d426175374a10905bd42d6a70723c");
+    localStorage.setItem("token", "pc_9b3410ece7f84efd9b1a1f326faaf31c");
     //删
     var _token = localStorage.getItem("token");
     if (_token == null) {
