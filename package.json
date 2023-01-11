@@ -1,0 +1,23 @@
+{
+  "name": "xxzy",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0"
+  },
+  "dependencies": {
+    "@jridgewell/sourcemap-codec": "^1.4.14",
+    "axios": "^1.2.2",
+    "querystring": "^0.2.1",
+    "vite-plugin-vue2": "^2.0.3",
+    "vue": "^2.7.14",
+    "vue-router": "^3.6.5",
+    "vue-template-compiler": "^2.7.14"
+  }
+}
