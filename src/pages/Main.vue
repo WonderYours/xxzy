@@ -25,10 +25,10 @@ export default {
   },
   mounted() {
     //调试期代码，生产环境删
-    localStorage.setItem("token", "pc_9b3410ece7f84efd9b1a1f326faaf31c");
+    localStorage.setItem("token", "pc_1299fe83cff74775be9aec92e358382a");
     //删
     var _token = localStorage.getItem("token");
-    if (_token == null) {
+    if (_token === null) {
       window.open("/login.html", "_self");
     }
     const options = {

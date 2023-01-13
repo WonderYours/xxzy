@@ -1,6 +1,6 @@
 import VueRouter from "vue-router"
 import Main from "../pages/Main.vue"
-import TaskView from "../pages/TaskView.vue"
+import Settler from "../pages/Settler.vue"
 export default new VueRouter({
     routes: [
         {
@@ -8,13 +8,8 @@ export default new VueRouter({
             component: Main
         },
         {
-            path: "/view",
-            component: TaskView,
-            props($route) {
-                return {
-                    sid: $route.query.sid
-                }
-            }
+            path: "/settler",
+            component: Settler
         },
         {
             path: "*",
