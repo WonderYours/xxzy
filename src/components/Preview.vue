@@ -14,10 +14,19 @@
 
 <script>
 export default {
+  created() {
+    var _this = this;
+    document.onkeydown = () => {
+      let key = window.event.keyCode;
+      if (key == 39 || key == 13) {
+        _this.next();
+      }
+    };
+  },
   props: ["taskdata"],
   methods: {
     clear() {
-      this.$emit("clear")
+      this.$emit("clear");
     },
     next() {
       this.$emit("next");

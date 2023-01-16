@@ -1,5 +1,6 @@
 <template>
   <div>
+    <router-link to="/home">回首页</router-link>
     <progress max="100" :value="loaderValue"></progress>
     <span>
       <p>预览阶段</p>
@@ -24,8 +25,9 @@
       v-else-if="loaderValue == 66"
       @next="changeV(100)"
       @back="changeV(33)"
+      :taskdata="taskdata"
     />
-    <Complete v-else-if="100" @back="changeV(66)" />
+    <Complete v-else-if="100" @back="changeV(66)" :taskdata="taskdata"/>
   </div>
 </template>
 
@@ -48,11 +50,10 @@ export default {
       taskdata: {},
       /**↓
        * {
-       *  sid:{name,answers,subSubData,objSubData}
+       *  sid:{name,answers,objSubData,sub,subSubData}
        * }
        */
       loaderValue: 0, //0,33,66,100
-      submitData: {},
     };
   },
   methods: {
@@ -67,11 +68,44 @@ export default {
     changeV(v) {
       this.loaderValue = v;
     },
+    getNoRepeatRandom(num, per) {
+      let arr = [];
+      for (let i = 1; i <= num; i++) {
+        arr.push(i);
+      }
+      let n = parseInt(arr.length * per);
+      let ret = [];
+      for (let i = 1; i <= n; i++) {
+        let l = arr.length;
+        let index = parseInt(Math.random() * (l + 1) - 1);
+        ret.push(arr[index]);
+        arr.splice(index, 1);
+      }
+      return ret;
+    },
+    handleString(response, answer, i) {
+      let subString = "";
+      for (let h of response.data["data"]) {
+        if (h["hasSubjectiveItem"] === 0) {
+          if (answer[h["teaCode"]].split("").length == 1) {
+            subString += h["teaId"] + "," + answer[h["teaCode"]] + "|";
+          } else {
+            for (let g of answer[h["teaCode"]].split("")) {
+              subString += h["teaId"] + "," + g + ";";
+            }
+            subString += "|";
+          }
+        }
+      }
+      subString = subString.replaceAll(";|", "|");
+      subString = subString.substring(0, subString.length - 1);
+      this.$set(this.taskdata[i], ["objSubData"], subString);
+    },
   },
   mounted() {
     let token = localStorage.getItem("token");
     let data = localStorage.getItem("Settler");
-    data = data === null ? {} : data;
+    data = data === null ? "{}" : data;
     this.taskdata = JSON.parse(data);
     const options = {
       method: "POST",
@@ -85,29 +119,43 @@ export default {
         .request(options)
         .then((response) => {
           let answerArray = this.taskdata[i]["answers"].split("\n");
-          let answer = {};
+          let answer = {}; //一个对象，key为题号，value为答案
           for (let j of answerArray) {
             answer[j.split(".")[0]] = j.split(".")[1].replace(" ", "");
           }
-          //处理提交字符串
-          let subString = "";
-          for (let h of response.data["data"]) {
-            if (h["hasSubjectiveItem"] === 0) {
-              if (answer[h["teaCode"]].split("").length == 1) {
-                subString += h["teaId"] + "," + answer[h["teaCode"]] + "|";
-              } else {
-                for (let g of answer[h["teaCode"]].split("")) {
-                  subString += h["teaId"] + "," + g + ";";
-                }
-                subString += "|";
-              }
+          this.$set(this.taskdata[i], "sub", {});
+          let objNum = 0;
+          for (let j of response.data["data"]) {
+            if (j["hasSubjectiveItem"] === 0) {
+              objNum++;
             } else {
+              this.$set(this.taskdata[i]["sub"], j["teaId"], []);
             }
           }
-          subString = subString.replaceAll(";|", "|");
-          subString = subString.substring(0, subString.length - 1);
-          //处理完成
-          this.$set(this.taskdata[i],["objSubData"], subString);
+          let wrongIndexs = this.getNoRepeatRandom(objNum, 0.3).sort((a, b) => {
+            return a - b;
+          });
+          for (let j of wrongIndexs) {
+            switch (answer[String(j)]) {
+              case "A":
+                answer[String(j)] = "D";
+                break;
+              case "B":
+                answer[String(j)] = "A";
+                break;
+              case "C":
+                answer[String(j)] = "B";
+                break;
+              case "D":
+                answer[String(j)] = "C";
+                break;
+              default:
+                answer[String(j)] = "BD";
+            }
+          }
+          this.taskdata[i]["answers"] = answer;
+          //处理提交字符串
+          this.handleString(response, answer, i);
           //该处理主观题并传给ConfirmSub
         })
         .catch(function (error) {
